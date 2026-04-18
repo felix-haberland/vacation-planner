@@ -67,6 +67,135 @@ def delete_trip(trip_id: int, db: Session = Depends(get_trips_db)):
 
 
 # ---------------------------------------------------------------------------
+# VacationMap region search (for linking)
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/vacationmap/regions/{lookup_key:path}/details")
+def get_region_details(
+    lookup_key: str,
+    month: str = "jun",
+    db: Session = Depends(get_vacationmap_db),
+):
+    """Get full VacationMap details for a region."""
+    from . import vacationmap as vm
+
+    details = vm.get_destination_details(db, lookup_key, month)
+    if details is None:
+        raise HTTPException(status_code=404, detail="Region not found")
+
+    m = month.lower()
+    return {
+        "destination": f"{details['region_name']}, {details['country_name']}",
+        "lookup_key": lookup_key,
+        "total_score": details.get("total_score"),
+        "weather_score": round(details.get("weather_score", 0), 1),
+        "temp_day": details.get(f"temp_{m}"),
+        "temp_night": details.get(f"temp_night_{m}"),
+        "rain_days": details.get(f"rain_{m}"),
+        "cost_relative": details.get(f"cost_relative_{m}"),
+        "cost_absolute": details.get(f"cost_absolute_{m}"),
+        "busyness_relative": details.get(f"busyness_relative_{m}"),
+        "busyness_absolute": details.get(f"busyness_absolute_{m}"),
+        "attractiveness": details.get(f"attractiveness_relative_{m}"),
+        "golf_score": details.get("golf_score"),
+        "nature_score": details.get("nature_score"),
+        "hiking_score": details.get("hiking_score"),
+        "safety": details.get("crime_safety"),
+        "city_access": details.get("city_access"),
+        "hotel_quality": details.get("hotel_quality"),
+        "tourism_level": details.get("tourism_level"),
+        "flight_hours": details.get("flight_time_hours"),
+        "flight_transfers": details.get("flight_transfers"),
+        "tips": details.get(f"tips_{m}"),
+        "visit": details.get("visit"),
+    }
+
+
+@app.get("/api/vacationmap/regions/search")
+def search_regions(q: str = "", db: Session = Depends(get_vacationmap_db)):
+    """Search VacationMap regions by name for autocomplete."""
+    from sqlalchemy import text
+
+    if len(q) < 2:
+        return []
+    rows = db.execute(
+        text(
+            "SELECT r.name as region_name, c.name as country_name, c.code as country_code "
+            "FROM regions r JOIN countries c ON r.country_id = c.id "
+            "WHERE r.name LIKE :q OR c.name LIKE :q "
+            "ORDER BY r.name LIMIT 20"
+        ),
+        {"q": f"%{q}%"},
+    ).fetchall()
+    return [
+        {
+            "lookup_key": f"{r.country_code}:{r.region_name}",
+            "label": f"{r.region_name}, {r.country_name}",
+        }
+        for r in rows
+    ]
+
+
+class LinkRegionBody(schemas.BaseModel):
+    lookup_key: str
+
+
+@app.post("/api/trips/{trip_id}/suggested/{dest_id}/link")
+def link_suggested_region(
+    trip_id: int,
+    dest_id: int,
+    body: LinkRegionBody,
+    trips_db: Session = Depends(get_trips_db),
+    vm_db: Session = Depends(get_vacationmap_db),
+):
+    """Link a suggested destination to a VacationMap region and resolve scores."""
+    dest = crud.get_suggested(trips_db, dest_id)
+    if dest is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    from .tools import _build_scores_from_db
+
+    trip = crud.get_trip(trips_db, trip_id)
+    month = trip.target_month or "jun"
+    scores = _build_scores_from_db(vm_db, body.lookup_key, month)
+    dest.region_lookup_key = body.lookup_key
+    if scores:
+        import json
+
+        dest.scores_snapshot = json.dumps(scores)
+    trips_db.commit()
+    return {"status": "linked", "scores_resolved": scores is not None}
+
+
+@app.post("/api/trips/{trip_id}/shortlisted/{dest_id}/link")
+def link_shortlisted_region(
+    trip_id: int,
+    dest_id: int,
+    body: LinkRegionBody,
+    trips_db: Session = Depends(get_trips_db),
+    vm_db: Session = Depends(get_vacationmap_db),
+):
+    """Link a shortlisted destination to a VacationMap region and resolve scores."""
+    dest = (
+        trips_db.query(crud.models.ShortlistedDestination).filter_by(id=dest_id).first()
+    )
+    if dest is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    from .tools import _build_scores_from_db
+
+    trip = crud.get_trip(trips_db, trip_id)
+    month = trip.target_month or "jun"
+    scores = _build_scores_from_db(vm_db, body.lookup_key, month)
+    dest.region_lookup_key = body.lookup_key
+    if scores:
+        import json
+
+        dest.scores_snapshot = json.dumps(scores)
+    trips_db.commit()
+    return {"status": "linked", "scores_resolved": scores is not None}
+
+
+# ---------------------------------------------------------------------------
 # Suggested destination actions
 # ---------------------------------------------------------------------------
 

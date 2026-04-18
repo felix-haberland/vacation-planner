@@ -42,9 +42,9 @@ def _build_system_prompt(trip: models.TripPlan, vm_db: Session) -> str:
 
     excluded = []
     for e in trip.excluded:
-        entry = f"- {e.destination_name}: {e.reason}"
-        if e.ai_reasoning:
-            entry += f" — Originally suggested because: {e.ai_reasoning}"
+        entry = f"- {e.destination_name} — REASON: {e.reason}"
+        if e.user_note:
+            entry += f" | User note: {e.user_note}"
         excluded.append(entry)
 
     trip_context = f"""## Current Trip
@@ -59,7 +59,7 @@ def _build_system_prompt(trip: models.TripPlan, vm_db: Session) -> str:
 ### Shortlisted Destinations ({len(shortlisted)})
 {chr(10).join(shortlisted) if shortlisted else 'None yet'}
 
-### Excluded Destinations ({len(excluded)})
+### Excluded Destinations ({len(excluded)}) — RESPECT THESE DECISIONS. Read the reasons carefully — they reveal preferences that may apply to similar destinations too.
 {chr(10).join(excluded) if excluded else 'None yet'}"""
 
     # Visit history from VacationMap
@@ -76,7 +76,7 @@ def _build_system_prompt(trip: models.TripPlan, vm_db: Session) -> str:
                 line += f" ({v['rating_summary']})"
             visit_lines.append(line)
         visit_context = f"""## Previously Visited Destinations
-The couple has visited these places before. Factor this into your suggestions — avoid "never" revisit destinations, and note when suggesting a place they've been before.
+The couple has visited these places before. "never" and "not_soon" destinations are filtered from search results. "few_years" destinations appear annotated — only suggest them if they're a truly exceptional fit. Always mention high-scoring filtered destinations to the user (e.g., "X and Y would fit well but are excluded due to recent visits").
 
 {chr(10).join(visit_lines)}"""
     else:
@@ -189,11 +189,7 @@ def handle_chat_message(
                     )
 
                     # Track if trip state was modified
-                    if block.name in (
-                        "suggest_for_review",
-                        "shortlist_destination",
-                        "exclude_destination",
-                    ):
+                    if block.name == "suggest_for_review":
                         trip_state_changed = True
 
             # Add assistant response and tool results to messages

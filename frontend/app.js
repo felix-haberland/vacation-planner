@@ -24,6 +24,7 @@ createApp({
         const editingDescription = ref(false);
         const editDescValue = ref('');
         const descEditEl = ref(null);
+        const expandedReasoning = ref(new Set());
 
         const activeConversations = computed(() => {
             const convs = (currentTrip.value?.conversations || []).filter(c => c.status !== 'archived');
@@ -85,6 +86,7 @@ createApp({
         async function openTrip(tripId, autoMessage) {
             const trip = await api(`/api/trips/${tripId}`);
             currentTrip.value = trip;
+            editingDescription.value = false;
 
             // Pick the last conversation, or create one if none exist
             let convId;
@@ -281,6 +283,77 @@ createApp({
             if (chatInputEl.value) chatInputEl.value.focus();
         }
 
+        // --- Destination detail popup ---
+        const destDetail = ref(null);
+        const destDetailLoading = ref(false);
+
+        async function showDestDetail(dest) {
+            if (!dest.region_lookup_key) {
+                // No VacationMap link — show what we have from scores_snapshot
+                destDetail.value = {
+                    destination: dest.destination_name,
+                    ...(dest.scores_snapshot || {}),
+                    _noLink: true,
+                };
+                return;
+            }
+            destDetail.value = { destination: dest.destination_name };
+            destDetailLoading.value = true;
+            try {
+                const month = currentTrip.value?.target_month || 'jun';
+                const data = await api(`/api/vacationmap/regions/${encodeURIComponent(dest.region_lookup_key)}/details?month=${month}`);
+                destDetail.value = data;
+            } catch (e) {
+                destDetail.value = {
+                    destination: dest.destination_name,
+                    ...(dest.scores_snapshot || {}),
+                    _error: e.message,
+                };
+            } finally {
+                destDetailLoading.value = false;
+            }
+        }
+
+        function fmt(val, suffix) {
+            if (val == null) return '—';
+            const n = typeof val === 'number' ? val.toFixed(1) : val;
+            return suffix ? `${n}${suffix}` : n;
+        }
+
+        // --- Region linking ---
+        const linkingDest = ref(null); // { section: 'suggested'|'shortlisted', dest }
+        const linkSearch = ref('');
+        const linkResults = ref([]);
+        const linkSearchEl = ref(null);
+        let linkSearchTimer = null;
+
+        async function startLinking(section, dest) {
+            linkingDest.value = { section, dest };
+            linkSearch.value = dest.destination_name.split(',')[0].trim();
+            linkResults.value = [];
+            await nextTick();
+            if (linkSearchEl.value) linkSearchEl.value.focus();
+            searchRegions();
+        }
+
+        function searchRegions() {
+            clearTimeout(linkSearchTimer);
+            if (linkSearch.value.length < 2) { linkResults.value = []; return; }
+            linkSearchTimer = setTimeout(async () => {
+                linkResults.value = await api(`/api/vacationmap/regions/search?q=${encodeURIComponent(linkSearch.value)}`);
+            }, 200);
+        }
+
+        async function confirmLink(region) {
+            const { section, dest } = linkingDest.value;
+            await api(`/api/trips/${currentTrip.value.id}/${section}/${dest.id}/link`, {
+                method: 'POST',
+                body: JSON.stringify({ lookup_key: region.lookup_key }),
+            });
+            linkingDest.value = null;
+            currentTrip.value = await api(`/api/trips/${currentTrip.value.id}`);
+        }
+
         // --- Inline note editing ---
         async function editNote(section, dest) {
             const current = dest.user_note || '';
@@ -384,13 +457,23 @@ createApp({
         }
 
         function sv(dest, key) {
-            if (!dest.scores_snapshot) return '—';
+            if (!dest.scores_snapshot || !dest.scores_snapshot.total_score) return '—';
             const v = dest.scores_snapshot[key];
             return v != null ? (typeof v === 'number' ? v.toFixed(1) : v) : '—';
         }
 
+        function toggleReasoning(destId) {
+            const s = new Set(expandedReasoning.value);
+            if (s.has(destId)) s.delete(destId); else s.add(destId);
+            expandedReasoning.value = s;
+        }
+
+        function isReasoningExpanded(destId) {
+            return expandedReasoning.value.has(destId);
+        }
+
         function flightVal(dest) {
-            if (!dest.scores_snapshot) return '—';
+            if (!dest.scores_snapshot || !dest.scores_snapshot.total_score) return '—';
             const h = dest.scores_snapshot.flight_hours;
             return h != null ? `${h}h` : '—';
         }
@@ -489,6 +572,10 @@ createApp({
             activeConversations, archivedConversations, showArchivedConvs,
             editingDescription, editDescValue, descEditEl,
             startEditDescription, saveDescription,
+            destDetail, destDetailLoading, showDestDetail, fmt,
+            expandedReasoning, toggleReasoning, isReasoningExpanded,
+            linkingDest, linkSearch, linkResults, linkSearchEl,
+            startLinking, searchRegions, confirmLink,
             switchConversation, newConversation,
             archiveConversation, unarchiveConversation, deleteConversation, renameConversation,
             shortlistSuggested, excludeSuggested,

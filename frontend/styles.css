@@ -91,6 +91,7 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
 .planning-layout {
     display: flex;
     height: calc(100vh - 48px);
+    overflow: hidden;
 }
 
 .planning-main {
@@ -174,59 +175,175 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
     border: 1px dashed #ddd;
 }
 
+/* --- Tables --- */
 .dest-table {
     width: 100%;
     border-collapse: collapse;
     background: white;
     border-radius: 8px;
-    overflow: hidden;
     border: 1px solid #e0e0e0;
+    table-layout: fixed;
 }
 .dest-table th, .dest-table td {
-    padding: 8px 10px;
+    padding: 4px 5px;
     text-align: left;
     border-bottom: 1px solid #f0f0f0;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     vertical-align: top;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .dest-table th {
     background: #f8f9fa;
     font-weight: 600;
-    font-size: 0.78rem;
-    color: #666;
+    font-size: 0.68rem;
+    color: #888;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
-    white-space: nowrap;
+    padding: 3px 5px;
 }
-/* Score columns stay compact */
-.col-score { white-space: nowrap; width: 1%; }
-.col-actions { white-space: nowrap; width: 1%; }
-.col-note { width: 100px; }
-.col-dest { white-space: nowrap; }
+/* 9 columns: dest 15% + 5 scores 5% each + reasoning auto + notes 8% + actions 7% = 55% fixed, 45% reasoning */
+.dest-table th:nth-child(1),
+.dest-table td:nth-child(1) { width: 15%; }
+.dest-table th:nth-child(2), .dest-table td:nth-child(2),
+.dest-table th:nth-child(3), .dest-table td:nth-child(3),
+.dest-table th:nth-child(4), .dest-table td:nth-child(4),
+.dest-table th:nth-child(5), .dest-table td:nth-child(5),
+.dest-table th:nth-child(6), .dest-table td:nth-child(6) { width: 5%; text-align: center; }
+/* 7th = reasoning: gets remaining space */
+.dest-table th:nth-child(8), .dest-table td:nth-child(8) { width: 8%; }
+.dest-table th:nth-child(9), .dest-table td:nth-child(9) { width: 7%; }
 
-.dest-name { font-weight: 600; }
-.reasoning-cell {
-    font-size: 0.82rem;
+.td-dest { cursor: pointer; white-space: normal !important; word-break: break-word; }
+.td-dest:hover { color: #3498db; }
+.td-note { cursor: pointer; color: #999; font-style: italic; white-space: normal !important; word-break: break-word; }
+.td-note:hover { color: #333; }
+.td-reasoning {
+    white-space: normal !important;
+    font-size: 0.76rem;
     color: #555;
-    line-height: 1.4;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    white-space: normal;
+    line-height: 1.3;
 }
-.action-cell {
-    white-space: nowrap;
+.reasoning-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.more-link { color: #3498db; font-size: 0.7rem; cursor: pointer; }
+.more-link:hover { text-decoration: underline; }
+.td-actions { white-space: nowrap !important; }
+.btn-icon {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 0.8rem;
+}
+.btn-icon.btn-shortlist { color: #2e7d32; border-color: #a5d6a7; }
+.btn-icon.btn-shortlist:hover { background: #e8f5e9; }
+.btn-icon.btn-exclude { color: #c62828; border-color: #ef9a9a; }
+.btn-icon.btn-exclude:hover { background: #fce4ec; }
+.btn-icon.btn-review { color: #e65100; border-color: #ffcc80; }
+.btn-icon.btn-review:hover { background: #fff3e0; }
+
+/* ===== DESTINATION DETAIL POPUP ===== */
+.detail-modal {
+    background: white;
+    border-radius: 12px;
+    max-width: 520px;
+    width: 100%;
+    max-height: 85vh;
     display: flex;
-    gap: 4px;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.detail-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+}
+.detail-loading { text-align: center; color: #999; padding: 24px; }
+.detail-section {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.detail-section:last-child { border-bottom: none; }
+.detail-section h4 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #999;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+}
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.88rem;
+}
+.detail-item.highlight { background: #f0f7ff; font-weight: 500; }
+.detail-label { color: #666; }
+.detail-value { font-weight: 500; color: #333; }
+.detail-tips {
+    font-size: 0.88rem;
+    color: #555;
+    line-height: 1.5;
 }
 
-.note-cell {
+.link-btn {
+    background: none;
+    border: none;
     cursor: pointer;
-    color: #999;
-    font-size: 0.82rem;
-    font-style: italic;
-    max-width: 140px;
+    font-size: 0.8rem;
+    opacity: 0.5;
+    vertical-align: middle;
+    padding: 0 2px;
 }
-.note-cell:hover { background: #f5f5f5; color: #333; }
+.link-btn:hover { opacity: 1; }
+
+.link-modal {
+    background: white;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.link-body { padding: 16px 20px; }
+.link-search-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #3498db;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    margin-bottom: 8px;
+}
+.link-results {
+    max-height: 300px;
+    overflow-y: auto;
+}
+.link-result {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.link-result:hover { background: #e3f2fd; }
+.link-key { font-size: 0.75rem; color: #999; font-family: monospace; }
+.link-empty { color: #999; font-size: 0.9rem; text-align: center; padding: 16px; }
 
 .excluded-table td { color: #999; }
 .btn-review { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
@@ -236,9 +353,18 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
 
 /* ===== CHAT SIDEBAR ===== */
 .chat-sidebar {
-    width: 360px;
+    width: 300px;
+    flex-shrink: 0;
     border-left: 1px solid #e0e0e0;
     background: #fafafa;
+    position: relative;
+    overflow: hidden;
+    height: calc(100vh - 48px);
+}
+
+.chat-inner {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
 }
@@ -250,41 +376,44 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 .chat-sidebar-header h3 { font-size: 0.95rem; color: #555; }
 
 .conv-tabs {
     display: flex;
+    align-items: stretch;
     overflow-x: auto;
     border-bottom: 1px solid #e0e0e0;
     background: white;
-    padding: 0 4px;
-    gap: 2px;
+    padding: 0;
+    gap: 0;
+    flex-shrink: 0;
 }
 .conv-tab {
-    padding: 6px 12px;
+    padding: 6px 10px;
     border: none;
     background: none;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: #888;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
     flex-shrink: 0;
 }
-.conv-tab:hover { color: #333; }
+.conv-tab:hover { color: #333; background: #f8f8f8; }
 .conv-tab.active {
     color: #3498db;
     border-bottom-color: #3498db;
     font-weight: 600;
 }
-.conv-tab.conv-new { color: #2e7d32; }
+.conv-tab.conv-new { color: #2e7d32; font-size: 0.75rem; }
 .conv-tab.conv-new:hover { color: #1b5e20; }
-.conv-msg-count { font-size: 0.7rem; opacity: 0.6; }
+.conv-msg-count { font-size: 0.68rem; opacity: 0.5; margin-left: 2px; }
 .conv-rename-btn, .conv-archive-btn, .conv-unarchive-btn, .conv-delete-btn {
-    margin-left: 4px;
+    margin-left: 3px;
     opacity: 0;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     transition: opacity 0.15s;
 }
 .conv-tab:hover .conv-rename-btn,
@@ -294,13 +423,20 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
 .conv-rename-btn:hover, .conv-archive-btn:hover,
 .conv-unarchive-btn:hover, .conv-delete-btn:hover { opacity: 1 !important; }
 .conv-delete-btn:hover { color: #e74c3c; }
-.conv-tab.conv-archive-toggle { color: #999; font-style: italic; margin-left: auto; }
+.conv-tab.conv-archive-toggle {
+    color: #aaa;
+    font-size: 0.72rem;
+    font-style: italic;
+    margin-left: auto;
+    border-bottom-color: transparent;
+}
 .conv-tabs.conv-archived { background: #f9f9f9; border-bottom: 1px solid #eee; }
 .conv-tab.archived { color: #aaa; font-style: italic; }
 
 .messages {
-    flex: 1;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    height: calc(100vh - 180px);
     padding: 12px;
     display: flex;
     flex-direction: column;
@@ -378,6 +514,7 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
     background: #e8f5e9;
     border-top: 1px solid #c8e6c9;
     text-align: center;
+    flex-shrink: 0;
 }
 .btn-answer {
     background: #2e7d32;
@@ -406,6 +543,7 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
     padding: 10px 12px;
     border-top: 1px solid #e0e0e0;
     background: white;
+    flex-shrink: 0;
 }
 .chat-input input {
     flex: 1;
@@ -426,10 +564,10 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
     max-width: 100% !important;
     border-left: none !important;
     border-bottom: 2px solid #ddd;
-    height: 55vh;
+    height: 55vh !important;
     min-height: 300px;
     flex-shrink: 0;
-    order: -1; /* chat on top */
+    order: -1;
 }
 .chat-expanded .planning-main {
     flex: 1;
@@ -458,6 +596,26 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
     display: flex;
     flex-direction: column;
     box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.zoom-modal.zoom-split {
+    max-width: 1000px;
+}
+.zoom-content-area {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+.zoom-split .zoom-body {
+    flex: 1;
+    border-right: 1px solid #e0e0e0;
+    overflow-y: auto;
+}
+.zoom-split .zoom-reply {
+    width: 340px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    border-top: none;
 }
 .zoom-header {
     display: flex;
@@ -513,7 +671,6 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
 /* Interactive reply in zoom */
 .zoom-reply {
     padding: 16px 20px;
-    border-top: 2px solid #e8f5e9;
     background: #fafffe;
 }
 .zoom-reply h4 { font-size: 0.9rem; color: #2e7d32; margin-bottom: 12px; }
@@ -537,6 +694,16 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
 .zoom-reply-actions { margin-top: 12px; }
 
 /* --- Responsive --- */
+
+.messages.has-answer-btn { height: calc(100vh - 220px); }
+
+/* iPad landscape — browser chrome takes extra space */
+@media (max-width: 1250px) {
+    .messages { height: calc(100vh - 270px); }
+    .messages.has-answer-btn { height: calc(100vh - 310px); }
+}
+
+/* Tablet / stacked layout */
 @media (max-width: 1024px) {
     .planning-layout {
         flex-direction: column;
@@ -546,22 +713,16 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
     .planning-main {
         flex: 1;
         min-height: 0;
-        overflow: hidden;
         display: flex;
         flex-direction: column;
+        order: 1;
     }
     .tables-area {
         flex: 1;
         overflow: auto;
         -webkit-overflow-scrolling: touch;
     }
-    .dest-table {
-        min-width: 700px;
-    }
-    .planning-toolbar {
-        flex-wrap: wrap;
-        flex-shrink: 0;
-    }
+    .planning-toolbar { flex-wrap: wrap; flex-shrink: 0; }
     .action-buttons {
         width: 100%;
         overflow-x: auto;
@@ -570,17 +731,23 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
         padding-bottom: 4px;
     }
     .chat-sidebar {
-        width: 100%;
+        position: relative;
+        width: 100% !important;
+        height: 35vh !important;
+        min-height: 220px;
         border-left: none;
         border-top: 2px solid #ddd;
-        height: 40vh;
-        flex-shrink: 0;
+        order: 2;
     }
+    .td-reasoning { max-width: 150px; }
+    .zoom-content-area { flex-direction: column; }
+    .zoom-split .zoom-body { border-right: none; border-bottom: 1px solid #e0e0e0; }
+    .zoom-split .zoom-reply { width: 100%; }
 }
 
 @media (max-width: 600px) {
-    .dest-table { min-width: 600px; }
-    .reasoning-cell { max-width: 180px; }
+    .td-reasoning { max-width: 100px; }
     .action-buttons { gap: 4px; }
-    .btn-action { padding: 6px 10px; font-size: 0.78rem; }
+    .btn-action { padding: 5px 8px; font-size: 0.72rem; }
+    .chat-sidebar { height: 30vh !important; min-height: 180px; }
 }

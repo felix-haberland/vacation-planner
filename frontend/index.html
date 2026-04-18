@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trip Planner</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/styles.css?v=20260416a">
     <script src="https://cdn.jsdelivr.net/npm/vue@3.4.15/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@15.0.0/marked.min.js"></script>
 </head>
@@ -109,36 +109,41 @@
                         <table class="dest-table">
                             <thead>
                                 <tr>
-                                    <th class="col-dest">Destination</th>
-                                    <th class="col-score">Score</th>
-                                    <th class="col-score">Weather</th>
-                                    <th class="col-score">Cost</th>
-                                    <th class="col-score">Golf</th>
-                                    <th class="col-score">Flight</th>
-                                    <th class="col-reasoning">Reasoning</th>
-                                    <th class="col-note">Notes</th>
-                                    <th class="col-actions">Actions</th>
+                                    <th>Destination</th>
+                                    <th>Score</th>
+                                    <th>Weather</th>
+                                    <th>Cost</th>
+                                    <th>Golf</th>
+                                    <th>Flight</th>
+                                    <th>Reasoning</th>
+                                    <th>Notes</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="dest in currentTrip.suggested" :key="'s'+dest.id">
-                                    <td class="dest-name">{{ dest.destination_name }}</td>
+                                    <td class="td-dest" @click="showDestDetail(dest)">
+                                        {{ dest.destination_name }}
+                                        <button v-if="!dest.scores_snapshot?.total_score" class="link-btn"
+                                            @click.stop="startLinking('suggested', dest)">&#128279;</button>
+                                    </td>
                                     <td>{{ sv(dest, 'total_score') }}</td>
                                     <td>{{ sv(dest, 'weather_score') }}</td>
                                     <td>{{ sv(dest, 'cost_relative') }}</td>
                                     <td>{{ sv(dest, 'golf_score') }}</td>
                                     <td>{{ flightVal(dest) }}</td>
-                                    <td class="reasoning-cell">{{ dest.ai_reasoning }}</td>
-                                    <td class="note-cell" @click="editNote('suggested', dest)">
-                                        {{ dest.user_note || '+ note' }}
+                                    <td class="td-reasoning">
+                                        <div :class="{ 'reasoning-clamp': !isReasoningExpanded(dest.id) }">{{ dest.ai_reasoning }}</div>
+                                        <a v-if="dest.ai_reasoning?.length > 80" class="more-link"
+                                            @click="toggleReasoning(dest.id)">{{ isReasoningExpanded(dest.id) ? 'less' : 'more' }}</a>
                                     </td>
-                                    <td class="action-cell">
-                                        <button class="btn btn-small btn-shortlist"
-                                            @click="shortlistSuggested(dest)">Shortlist</button>
-                                        <button class="btn btn-small btn-exclude"
-                                            @click="excludeSuggested(dest)">
-                                            {{ dest.pre_filled_exclude_reason ? 'Exclude (visited)' : 'Exclude' }}
-                                        </button>
+                                    <td class="td-note" @click="editNote('suggested', dest)">
+                                        {{ dest.user_note || '+' }}
+                                    </td>
+                                    <td class="td-actions">
+                                        <button class="btn-icon btn-shortlist" @click="shortlistSuggested(dest)" title="Shortlist">&#10003;</button>
+                                        <button class="btn-icon btn-exclude" @click="excludeSuggested(dest)"
+                                            :title="dest.pre_filled_exclude_reason || 'Exclude'">&#10007;</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -156,34 +161,40 @@
                         <table v-else class="dest-table">
                             <thead>
                                 <tr>
-                                    <th class="col-dest">Destination</th>
-                                    <th class="col-score">Score</th>
-                                    <th class="col-score">Weather</th>
-                                    <th class="col-score">Cost</th>
-                                    <th class="col-score">Golf</th>
-                                    <th class="col-score">Flight</th>
-                                    <th class="col-reasoning">Reasoning</th>
-                                    <th class="col-note">Notes</th>
-                                    <th class="col-actions">Actions</th>
+                                    <th>Destination</th>
+                                    <th>Score</th>
+                                    <th>Weather</th>
+                                    <th>Cost</th>
+                                    <th>Golf</th>
+                                    <th>Flight</th>
+                                    <th>Reasoning</th>
+                                    <th>Notes</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="dest in currentTrip.shortlisted" :key="'sl'+dest.id">
-                                    <td class="dest-name">{{ dest.destination_name }}</td>
+                                    <td class="td-dest" @click="showDestDetail(dest)">
+                                        {{ dest.destination_name }}
+                                        <button v-if="!dest.scores_snapshot?.total_score" class="link-btn"
+                                            @click.stop="startLinking('shortlisted', dest)">&#128279;</button>
+                                    </td>
                                     <td>{{ sv(dest, 'total_score') }}</td>
                                     <td>{{ sv(dest, 'weather_score') }}</td>
                                     <td>{{ sv(dest, 'cost_relative') }}</td>
                                     <td>{{ sv(dest, 'golf_score') }}</td>
                                     <td>{{ flightVal(dest) }}</td>
-                                    <td class="reasoning-cell">{{ dest.ai_reasoning }}</td>
-                                    <td class="note-cell" @click="editNote('shortlisted', dest)">
-                                        {{ dest.user_note || '+ note' }}
+                                    <td class="td-reasoning">
+                                        <div :class="{ 'reasoning-clamp': !isReasoningExpanded(dest.id) }">{{ dest.ai_reasoning }}</div>
+                                        <a v-if="dest.ai_reasoning?.length > 80" class="more-link"
+                                            @click="toggleReasoning(dest.id)">{{ isReasoningExpanded(dest.id) ? 'less' : 'more' }}</a>
                                     </td>
-                                    <td class="action-cell">
-                                        <button class="btn btn-small btn-review"
-                                            @click="unreviewShortlisted(dest)">To Review</button>
-                                        <button class="btn btn-small btn-exclude"
-                                            @click="excludeShortlisted(dest)">Exclude</button>
+                                    <td class="td-note" @click="editNote('shortlisted', dest)">
+                                        {{ dest.user_note || '+' }}
+                                    </td>
+                                    <td class="td-actions">
+                                        <button class="btn-icon btn-review" @click="unreviewShortlisted(dest)" title="Back to review">&#8634;</button>
+                                        <button class="btn-icon btn-exclude" @click="excludeShortlisted(dest)" title="Exclude">&#10007;</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -224,6 +235,7 @@
 
             <!-- CHAT SIDEBAR (always visible) -->
             <div class="chat-sidebar">
+              <div class="chat-inner">
                 <div class="chat-sidebar-header">
                     <h3>Assistant</h3>
                     <button class="btn btn-small" @click="chatExpanded = !chatExpanded">
@@ -261,7 +273,7 @@
                             title="Delete permanently">&#128465;</span>
                     </button>
                 </div>
-                <div class="messages" ref="messagesContainer">
+                <div class="messages" :class="{ 'has-answer-btn': lastMessageHasQuestions && !sending }" ref="messagesContainer">
                     <div v-for="(msg, idx) in messages" :key="msg.id"
                          class="message" :class="msg.role">
                         <div v-if="editingMessageId === msg.id" class="message-edit">
@@ -298,34 +310,188 @@
                     <button type="submit" class="btn btn-primary btn-small"
                         :disabled="sending || !chatInput.trim()">Send</button>
                 </form>
+              </div><!-- /chat-inner -->
             </div>
         </div>
+        <!-- DESTINATION DETAIL POPUP -->
+        <div v-if="destDetail" class="zoom-overlay" @click.self="destDetail = null">
+            <div class="detail-modal">
+                <div class="zoom-header">
+                    <span class="zoom-role">{{ destDetail.destination }}</span>
+                    <button class="btn btn-small" @click="destDetail = null">&times; Close</button>
+                </div>
+                <div class="detail-body">
+                    <div v-if="destDetailLoading" class="detail-loading">Loading...</div>
+                    <template v-else>
+                        <!-- Weather -->
+                        <div class="detail-section">
+                            <h4>Weather</h4>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Day temp</span>
+                                    <span class="detail-value">{{ fmt(destDetail.temp_day, '°C') }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Night temp</span>
+                                    <span class="detail-value">{{ fmt(destDetail.temp_night, '°C') }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Rain days</span>
+                                    <span class="detail-value">{{ fmt(destDetail.rain_days, 'd') }}</span>
+                                </div>
+                                <div class="detail-item highlight">
+                                    <span class="detail-label">Weather score</span>
+                                    <span class="detail-value">{{ fmt(destDetail.weather_score) }}/10</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Scores -->
+                        <div class="detail-section">
+                            <h4>Scores</h4>
+                            <div class="detail-grid">
+                                <div class="detail-item highlight">
+                                    <span class="detail-label">Total</span>
+                                    <span class="detail-value">{{ fmt(destDetail.total_score) }}/10</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Attractiveness</span>
+                                    <span class="detail-value">{{ fmt(destDetail.attractiveness) }}/10</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Cost (relative)</span>
+                                    <span class="detail-value">{{ fmt(destDetail.cost_relative) }}/10</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Cost (absolute)</span>
+                                    <span class="detail-value">{{ destDetail.cost_absolute != null ? '€' + destDetail.cost_absolute : '—' }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Busyness (relative)</span>
+                                    <span class="detail-value">{{ fmt(destDetail.busyness_relative) }}/10</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Busyness (absolute)</span>
+                                    <span class="detail-value">{{ fmt(destDetail.busyness_absolute) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Activities -->
+                        <div class="detail-section">
+                            <h4>Activities & Quality</h4>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Golf</span>
+                                    <span class="detail-value">{{ fmt(destDetail.golf_score) }}/10</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Nature</span>
+                                    <span class="detail-value">{{ fmt(destDetail.nature_score) }}/10</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Hiking</span>
+                                    <span class="detail-value">{{ fmt(destDetail.hiking_score) }}/10</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">City access</span>
+                                    <span class="detail-value">{{ fmt(destDetail.city_access) }}/10</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Hotel quality</span>
+                                    <span class="detail-value">{{ fmt(destDetail.hotel_quality) }}/10</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Tourism level</span>
+                                    <span class="detail-value">{{ fmt(destDetail.tourism_level) }}/10</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Safety</span>
+                                    <span class="detail-value">{{ fmt(destDetail.safety) }}/10</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Travel -->
+                        <div class="detail-section">
+                            <h4>Travel</h4>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Flight time</span>
+                                    <span class="detail-value">{{ destDetail.flight_hours ? destDetail.flight_hours + 'h' : '—' }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Transfers</span>
+                                    <span class="detail-value">{{ destDetail.flight_transfers ?? '—' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Tips -->
+                        <div v-if="destDetail.tips" class="detail-section">
+                            <h4>Tips</h4>
+                            <p class="detail-tips">{{ destDetail.tips }}</p>
+                        </div>
+                        <!-- Visit history -->
+                        <div v-if="destDetail.visit" class="detail-section">
+                            <h4>Previously Visited</h4>
+                            <p>Rating: {{ destDetail.visit.rating }}/10 — {{ destDetail.visit.visit_again }}</p>
+                            <p v-if="destDetail.visit.rating_summary">{{ destDetail.visit.rating_summary }}</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- REGION LINK OVERLAY -->
+        <div v-if="linkingDest" class="zoom-overlay" @click.self="linkingDest = null">
+            <div class="link-modal">
+                <div class="zoom-header">
+                    <span class="zoom-role">Link "{{ linkingDest.dest.destination_name }}" to VacationMap</span>
+                    <button class="btn btn-small" @click="linkingDest = null">&times; Close</button>
+                </div>
+                <div class="link-body">
+                    <input v-model="linkSearch" @input="searchRegions"
+                        placeholder="Search regions..." class="link-search-input" ref="linkSearchEl">
+                    <div class="link-results">
+                        <div v-for="r in linkResults" :key="r.lookup_key"
+                            class="link-result" @click="confirmLink(r)">
+                            <strong>{{ r.label }}</strong>
+                            <span class="link-key">{{ r.lookup_key }}</span>
+                        </div>
+                        <div v-if="linkSearch.length >= 2 && !linkResults.length" class="link-empty">
+                            No matching regions found
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- MESSAGE ZOOM OVERLAY -->
         <div v-if="zoomedMessage" class="zoom-overlay" @click.self="zoomedMessage = null">
-            <div class="zoom-modal">
+            <div class="zoom-modal" :class="{ 'zoom-split': zoomQuestions.length }">
                 <div class="zoom-header">
                     <span class="zoom-role">{{ zoomedMessage.role === 'user' ? 'You' : 'Assistant' }}</span>
                     <button class="btn btn-small" @click="zoomedMessage = null">&times; Close</button>
                 </div>
-                <div class="zoom-body" v-html="renderMarkdownFull(zoomedMessage.content)"></div>
+                <div class="zoom-content-area">
+                    <!-- Left: message content -->
+                    <div class="zoom-body" v-html="renderMarkdownFull(zoomedMessage.content)"></div>
 
-                <!-- Interactive reply for assistant messages with questions -->
-                <div v-if="zoomedMessage.role === 'assistant' && zoomQuestions.length"
-                     class="zoom-reply">
-                    <h4>Your Answers</h4>
-                    <div v-for="(q, i) in zoomQuestions" :key="i" class="zoom-question">
-                        <label>{{ q.text }}</label>
-                        <input v-model="q.answer" :placeholder="'Answer...'"
-                            @keyup.enter="sendZoomAnswers">
-                    </div>
-                    <div class="zoom-reply-actions">
-                        <button class="btn btn-primary" @click="sendZoomAnswers"
-                            :disabled="sending">Send Answers</button>
+                    <!-- Right: answer fields (only when questions detected) -->
+                    <div v-if="zoomedMessage.role === 'assistant' && zoomQuestions.length"
+                         class="zoom-reply">
+                        <h4>Your Answers</h4>
+                        <div v-for="(q, i) in zoomQuestions" :key="i" class="zoom-question">
+                            <label>{{ q.text }}</label>
+                            <input v-model="q.answer" :placeholder="'Answer...'"
+                                @keyup.enter="sendZoomAnswers">
+                        </div>
+                        <div class="zoom-reply-actions">
+                            <button class="btn btn-primary" @click="sendZoomAnswers"
+                                :disabled="sending">Send Answers</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=20260416a"></script>
 </body>
 </html>

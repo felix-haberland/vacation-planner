@@ -186,8 +186,14 @@ def search_destinations(
     min_safety_score: float = 6.0,
     exclude_visited_never: bool = True,
     limit: int = 10,
-) -> list[dict]:
-    """Search VacationMap regions for a month, apply filters, return scored results."""
+) -> dict:
+    """Search VacationMap regions for a month, apply filters, return scored results.
+
+    Returns a dict with:
+      - "results": list of scored destination dicts
+      - "filtered_visited": list of high-scoring destinations excluded due to
+        visit_again being 'not_soon' (so the AI can mention them)
+    """
     m = month.lower()
     sql = f"""
         SELECT {_REGION_COLS}, {_month_cols(m)}
@@ -207,31 +213,62 @@ def search_destinations(
 
     rows = db.execute(text(sql), params).fetchall()
     results = []
+    filtered_visited = []
 
-    # Get visited-never region IDs to exclude
-    never_ids = set()
+    # Get visited region IDs and their revisit preferences
+    exclude_ids = {}  # never + not_soon: hard-exclude from results
+    few_years_ids = {}  # few_years: include but annotate
     if exclude_visited_never:
         vrows = db.execute(
-            text("SELECT region_id FROM region_visits WHERE visit_again = 'never'")
+            text(
+                "SELECT region_id, visit_again, rating, rating_summary "
+                "FROM region_visits"
+            )
         ).fetchall()
-        never_ids = {r[0] for r in vrows}
+        for vr in vrows:
+            if vr[1] in ("never", "not_soon"):
+                exclude_ids[vr[0]] = {
+                    "visit_again": vr[1],
+                    "rating": vr[2],
+                    "rating_summary": vr[3],
+                }
+            elif vr[1] == "few_years":
+                few_years_ids[vr[0]] = {
+                    "visit_again": vr[1],
+                    "rating": vr[2],
+                    "rating_summary": vr[3],
+                }
 
     golf_weight = 0.3 if activity_focus == "golf" else 0.0
 
     for row in rows:
         d = _row_to_dict(row)
-        if d["id"] in never_ids:
-            continue
         score = _compute_score(d, m, golf_weight=golf_weight)
         d["total_score"] = score
         d["weather_score"] = _weather_comfort(
             d.get(f"temp_{m}"), d.get(f"rain_{m}"), d.get(f"humidity_{m}")
         )
         d["lookup_key"] = f"{d['country_code']}:{d['region_name']}"
+
+        if d["id"] in exclude_ids:
+            # Track high-scoring excluded destinations (not_soon only, skip never)
+            visit_info = exclude_ids[d["id"]]
+            if visit_info["visit_again"] == "not_soon":
+                d["visit_again"] = visit_info
+                filtered_visited.append(d)
+            continue
+
+        if d["id"] in few_years_ids:
+            d["visit_again"] = few_years_ids[d["id"]]
         results.append(d)
 
     results.sort(key=lambda x: x["total_score"], reverse=True)
-    return results[:limit]
+    filtered_visited.sort(key=lambda x: x["total_score"], reverse=True)
+
+    return {
+        "results": results[:limit],
+        "filtered_visited": filtered_visited[:5],
+    }
 
 
 def get_destination_details(
