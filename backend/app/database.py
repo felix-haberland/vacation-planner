@@ -180,12 +180,12 @@ def _seed_from_bundled_sqlite_if_empty():
         return
 
     inspector = sqla_inspect(trips_engine)
-    if "golf_resorts" not in inspector.get_table_names():
-        return
+    if "trip_plans" not in inspector.get_table_names():
+        return  # Alembic hasn't built the schema yet — unexpected, bail out.
     with trips_engine.connect() as conn:
-        (count,) = conn.execute(text("SELECT COUNT(*) FROM golf_resorts")).one()
+        (count,) = conn.execute(text("SELECT COUNT(*) FROM trip_plans")).one()
     if count > 0:
-        return
+        return  # Already populated (existing deploy) — don't overwrite.
 
     def _coerce_value(value, col_type):
         """SQLite stores datetimes as ISO strings; SQLAlchemy's DateTime
