@@ -45,7 +45,7 @@ import yaml  # noqa: E402
 
 import anthropic  # noqa: E402
 
-from app.database import TripsSessionLocal, init_trips_db  # noqa: E402
+from app.database import GolfSessionLocal, init_golf_db  # noqa: E402
 from app.golf import crud, extraction, fetcher  # noqa: E402,F401
 from app.text_utils import normalize_name  # noqa: E402
 
@@ -340,11 +340,11 @@ def cmd_extract(args):
         print("ERROR: ANTHROPIC_API_KEY is not set. Pass --dry-run or export the key.")
         sys.exit(1)
 
-    init_trips_db()
+    init_golf_db()
     data = _load_seed()
     remaining = args.limit
 
-    db = TripsSessionLocal()
+    db = GolfSessionLocal()
     summary = {"created": 0, "skipped": 0, "failed": 0, "processed": 0}
     try:
 
