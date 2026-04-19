@@ -571,6 +571,8 @@ def trip_to_detail(trip: models.TripPlan, db: Session) -> schemas.TripDetail:
         for c in list_conversations(db, trip.id)
     ]
 
+    year_plan_link = _year_plan_link_for_trip(db, trip.id)
+
     return schemas.TripDetail(
         id=trip.id,
         name=trip.name,
@@ -583,4 +585,51 @@ def trip_to_detail(trip: models.TripPlan, db: Session) -> schemas.TripDetail:
         suggested=suggested,
         shortlisted=shortlisted,
         excluded=excluded,
+        year_plan_link=year_plan_link,
+    )
+
+
+def _year_plan_link_for_trip(
+    db: Session, trip_id: int
+) -> Optional[schemas.TripYearPlanLink]:
+    """Reverse lookup a trip → slot → option → year plan. Returns None if the
+    trip isn't linked to a slot, or if the yearly package isn't importable."""
+    try:
+        from ..yearly import crud as yearly_crud, models as yearly_models
+    except Exception:
+        return None
+    slot = yearly_crud.slot_for_trip(db, trip_id)
+    if slot is None:
+        return None
+    option = (
+        db.query(yearly_models.YearOption)
+        .filter(yearly_models.YearOption.id == slot.year_option_id)
+        .first()
+    )
+    if option is None:
+        return None
+    plan = (
+        db.query(yearly_models.YearPlan)
+        .filter(yearly_models.YearPlan.id == option.year_plan_id)
+        .first()
+    )
+    if plan is None:
+        return None
+    window_label = None
+    if slot.window_index is not None:
+        windows = yearly_crud._parse_windows(plan.windows)
+        if 0 <= slot.window_index < len(windows):
+            w = windows[slot.window_index]
+            window_label = w.get("label") or f"Window #{slot.window_index + 1}"
+        else:
+            window_label = f"Window #{slot.window_index + 1}"
+    return schemas.TripYearPlanLink(
+        year_plan_id=plan.id,
+        year_plan_name=plan.name,
+        year=plan.year,
+        option_id=option.id,
+        option_name=option.name,
+        window_label=window_label,
+        slot_id=slot.id,
+        slot_label=slot.label,
     )

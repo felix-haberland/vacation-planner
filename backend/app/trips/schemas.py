@@ -103,6 +103,20 @@ class ConversationSummary(BaseModel):
 # --- Trip aggregates ---
 
 
+class TripYearPlanLink(BaseModel):
+    """Back-reference: if this trip is the destination vessel for a slot in
+    a YearPlan, describe the link so the trip view can jump back."""
+
+    year_plan_id: int
+    year_plan_name: str
+    year: int
+    option_id: int
+    option_name: str
+    window_label: Optional[str] = None
+    slot_id: int
+    slot_label: Optional[str] = None
+
+
 class TripDetail(BaseModel):
     id: int
     name: str
@@ -115,6 +129,7 @@ class TripDetail(BaseModel):
     suggested: list[SuggestedDestinationResponse]
     shortlisted: list[ShortlistedDestinationResponse]
     excluded: list[ExcludedDestinationResponse]
+    year_plan_link: Optional[TripYearPlanLink] = None
 
     class Config:
         from_attributes = True

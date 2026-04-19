@@ -105,6 +105,20 @@
                     </div>
                 </div>
 
+                <div class="trip-year-link" v-if="currentTrip && currentTrip.year_plan_link">
+                    Part of year plan
+                    <a href="#" @click.prevent="openYearPlan(currentTrip.year_plan_link.year_plan_id)" class="trip-year-link-back">
+                        ← {{ currentTrip.year_plan_link.year_plan_name }}
+                        <span class="year-badge">{{ currentTrip.year_plan_link.year }}</span>
+                    </a>
+                    <span class="trip-year-link-sep">·</span>
+                    <span>Option <strong>{{ currentTrip.year_plan_link.option_name }}</strong></span>
+                    <template v-if="currentTrip.year_plan_link.window_label">
+                        <span class="trip-year-link-sep">·</span>
+                        <span>{{ currentTrip.year_plan_link.window_label }}</span>
+                    </template>
+                </div>
+
                 <div class="trip-description-bar" v-if="currentTrip">
                     <template v-if="editingDescription">
                         <textarea v-model="editDescValue" rows="2" class="desc-edit-input"

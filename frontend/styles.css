@@ -1212,6 +1212,20 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
 .year-detail-title { flex: 1; }
 .year-intent-empty { color: #9ca3af; font-style: italic; }
 
+/* Trip → YearPlan backlink pill */
+.trip-year-link {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    padding: 6px 12px; margin: 0 0 8px 0;
+    background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 6px;
+    color: #3730a3; font-size: 0.85rem;
+}
+.trip-year-link-back {
+    color: #4338ca; text-decoration: none; font-weight: 600;
+    display: inline-flex; gap: 4px; align-items: center;
+}
+.trip-year-link-back:hover { text-decoration: underline; }
+.trip-year-link-sep { color: #a5b4fc; }
+
 .slot-form-inline { display: flex; flex-direction: column; gap: 4px; }
 .slot-form-inline input, .slot-form-inline select, .slot-form-inline textarea { font-size: 0.85rem; }
 .slot-form-actions { display: flex; gap: 4px; }
