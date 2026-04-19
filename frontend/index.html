@@ -1300,7 +1300,7 @@
             <div v-for="plan in yearPlans" :key="plan.id" class="trip-card" @click="openYearPlan(plan.id)">
                 <div class="trip-card-header">
                     <h3>{{ plan.name }} <span class="year-badge">{{ plan.year }}</span></h3>
-                    <span class="status-badge" :class="plan.status">{{ plan.status }}</span>
+                    <span v-if="plan.status !== 'draft'" class="status-badge" :class="plan.status">{{ plan.status }}</span>
                 </div>
                 <p v-if="plan.intent" class="trip-desc">{{ plan.intent }}</p>
                 <div class="trip-meta">
@@ -1329,7 +1329,7 @@
                         <h2 v-else class="inline-editable" @click="startEditYearPlanField('name')" title="Click to rename">
                             {{ currentYearPlan.name }}
                             <span class="year-badge">{{ currentYearPlan.year }}</span>
-                            <span class="status-badge" :class="currentYearPlan.status">{{ currentYearPlan.status }}</span>
+                            <span v-if="currentYearPlan.status !== 'draft'" class="status-badge" :class="currentYearPlan.status">{{ currentYearPlan.status }}</span>
                         </h2>
 
                         <div v-if="editingYearPlanField === 'intent'" class="inline-edit inline-edit-block">
@@ -1472,7 +1472,7 @@
                                     </div>
                                     <div v-else class="opt-title">
                                         <span class="opt-name inline-editable" @click="startEditOptionField(opt, 'name')" title="Click to rename">{{ opt.name }}</span>
-                                        <span class="status-badge" :class="opt.status">{{ opt.status }}</span>
+                                        <span v-if="opt.status !== 'draft'" class="status-badge" :class="opt.status">{{ opt.status }}</span>
                                         <span v-if="opt.created_by === 'ai'" class="status-badge ai-tag">AI</span>
                                     </div>
 
