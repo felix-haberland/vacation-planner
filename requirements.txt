@@ -1,0 +1,4 @@
+# Root requirements.txt: nixpacks / Railway auto-detects this and runs
+# `pip install -r requirements.txt` into the system Python, which then has
+# uvicorn on PATH. Delegates to the real list inside backend/.
+-r backend/requirements.txt
