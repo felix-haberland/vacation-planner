@@ -1,9 +1,5 @@
-fastapi>=0.109.0
-uvicorn>=0.27.0
-sqlalchemy>=2.0.25
-pydantic>=2.5.3
-anthropic>=0.39.0
-httpx>=0.27.0
-pyyaml>=6.0
-alembic>=1.13.0
-psycopg2-binary>=2.9.9
+# The authoritative dependency list lives at the repo root so Railpack /
+# nixpacks / any other builder can pip-install it without copying the
+# whole tree first. This file exists so that `cd backend && pip install -r
+# requirements.txt` still works for local dev.
+-r ../requirements.txt
