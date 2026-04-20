@@ -12,13 +12,13 @@ const API = '';
 // scrolled. Applied via `v-sticky-top`.
 const stickyTop = {
     mounted(el) {
-        let ancestor = el.parentElement;
-        while (ancestor && ancestor !== document.body) {
-            const cs = getComputedStyle(ancestor);
-            if (cs.overflowY === 'auto' || cs.overflowY === 'scroll') break;
-            ancestor = ancestor.parentElement;
-        }
-        if (!ancestor || ancestor === document.body) return;
+        // Explicitly target .year-detail (the real vertical scrollport). A
+        // generic "nearest overflow-y:auto ancestor" walk picks up
+        // `.year-grid-scroll` instead because `overflow-x: auto` coerces
+        // the computed overflow-y to `auto` — even though that element
+        // never actually scrolls vertically.
+        const ancestor = el.closest('.year-detail');
+        if (!ancestor) return;
 
         let rafId = 0;
         const update = () => {
