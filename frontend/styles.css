@@ -803,23 +803,23 @@ header {
    mobile where overlay scrollbars are effectively invisible at rest. */
 .messages {
     background:
-        linear-gradient(#fafafa 40%, rgba(250, 250, 250, 0)) center top,
-        linear-gradient(rgba(250, 250, 250, 0), #fafafa 60%) center bottom,
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0)) center top,
-        linear-gradient(to top, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0)) center bottom;
+        linear-gradient(#fafafa 30%, rgba(250, 250, 250, 0)) center top,
+        linear-gradient(rgba(250, 250, 250, 0), #fafafa 70%) center bottom,
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0)) center top,
+        linear-gradient(to top, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0)) center bottom;
     background-repeat: no-repeat;
-    background-size: 100% 40px, 100% 40px, 100% 24px, 100% 24px;
+    background-size: 100% 20px, 100% 20px, 100% 8px, 100% 8px;
     background-attachment: local, local, scroll, scroll;
 }
 .year-detail,
 .tables-area {
     background:
-        linear-gradient(#fff 40%, rgba(255, 255, 255, 0)) center top,
-        linear-gradient(rgba(255, 255, 255, 0), #fff 60%) center bottom,
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0)) center top,
-        linear-gradient(to top, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0)) center bottom;
+        linear-gradient(#fff 30%, rgba(255, 255, 255, 0)) center top,
+        linear-gradient(rgba(255, 255, 255, 0), #fff 70%) center bottom,
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0)) center top,
+        linear-gradient(to top, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0)) center bottom;
     background-repeat: no-repeat;
-    background-size: 100% 40px, 100% 40px, 100% 24px, 100% 24px;
+    background-size: 100% 20px, 100% 20px, 100% 8px, 100% 8px;
     background-attachment: local, local, scroll, scroll;
 }
 
