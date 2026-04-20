@@ -1569,7 +1569,7 @@
                                         <!-- Active option: single ⋯ button opens exclude/delete menu. -->
                                         <div v-if="opt.status !== 'excluded'" class="idea-menu-wrap">
                                             <button class="btn btn-small" @click.stop="openOptMenuId = (openOptMenuId === opt.id ? null : opt.id)" title="More actions">⋯</button>
-                                            <div v-if="openOptMenuId === opt.id" class="idea-menu" @click.stop>
+                                            <div v-if="openOptMenuId === opt.id" class="idea-menu idea-menu-right" @click.stop>
                                                 <button class="idea-menu-item" @click="openOptMenuId = null; excludeOption(opt)">⊘ Exclude with reason</button>
                                                 <button class="idea-menu-item idea-menu-danger" @click="openOptMenuId = null; deleteOption(opt)">× Delete</button>
                                             </div>
@@ -1635,12 +1635,12 @@
                                                 <button v-if="idea.trip" class="btn btn-primary btn-small" @click="openSlotTrip(idea)" :title="`Open ${idea.trip.name}`">Open trip →</button>
                                                 <button v-if="idea.status === 'proposed'" class="btn btn-small" @click="acceptSlot(idea.id)" title="Accept proposed idea">✓</button>
                                                 <button class="btn btn-small" @click="startEditSlot(idea)" title="Edit">✎</button>
-                                                <button class="btn btn-small btn-exclude-idea" @click="excludeIdea(idea)" title="Exclude with reason">⊘</button>
                                                 <div class="idea-menu-wrap">
                                                     <button class="btn btn-small" @click="toggleIdeaMenu(idea.id, $event)" title="More actions">⋯</button>
-                                                    <div v-if="openIdeaMenuId === idea.id" class="idea-menu" @click.stop>
+                                                    <div v-if="openIdeaMenuId === idea.id" class="idea-menu idea-menu-right" @click.stop>
                                                         <button v-if="idea.status === 'open'" class="idea-menu-item" @click="ideaMenuUnreview(idea)">↺ Back to review</button>
-                                                        <span v-if="idea.status !== 'open'" class="idea-menu-empty">No extra actions</span>
+                                                        <button class="idea-menu-item" @click="closeIdeaMenu(); excludeIdea(idea)">⊘ Exclude with reason</button>
+                                                        <button class="idea-menu-item idea-menu-danger" @click="closeIdeaMenu(); deleteSlot(idea.id)">× Delete</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1757,7 +1757,7 @@
                             <div class="opt-actions">
                                 <div v-if="stackOption.status !== 'excluded'" class="idea-menu-wrap">
                                     <button class="btn btn-small" @click.stop="openOptMenuId = (openOptMenuId === stackOption.id ? null : stackOption.id)" title="More actions">⋯</button>
-                                    <div v-if="openOptMenuId === stackOption.id" class="idea-menu" @click.stop>
+                                    <div v-if="openOptMenuId === stackOption.id" class="idea-menu idea-menu-right" @click.stop>
                                         <button class="idea-menu-item" @click="openOptMenuId = null; excludeOption(stackOption)">⊘ Exclude with reason</button>
                                         <button class="idea-menu-item idea-menu-danger" @click="openOptMenuId = null; deleteOption(stackOption)">× Delete</button>
                                     </div>
@@ -1819,7 +1819,14 @@
                                             <button v-if="idea.trip" class="btn btn-primary btn-small" @click="openSlotTrip(idea)" :title="`Open ${idea.trip.name}`">Open trip →</button>
                                             <button v-if="idea.status === 'proposed'" class="btn btn-small" @click="acceptSlot(idea.id)" title="Accept proposed idea">✓</button>
                                             <button class="btn btn-small" @click="startEditSlot(idea)" title="Edit">✎</button>
-                                            <button class="btn btn-small btn-exclude-idea" @click="excludeIdea(idea)" title="Exclude with reason">⊘</button>
+                                            <div class="idea-menu-wrap">
+                                                <button class="btn btn-small" @click="toggleIdeaMenu(idea.id, $event)" title="More actions">⋯</button>
+                                                <div v-if="openIdeaMenuId === idea.id" class="idea-menu idea-menu-right" @click.stop>
+                                                    <button v-if="idea.status === 'open'" class="idea-menu-item" @click="closeIdeaMenu(); ideaMenuUnreview(idea)">↺ Back to review</button>
+                                                    <button class="idea-menu-item" @click="closeIdeaMenu(); excludeIdea(idea)">⊘ Exclude with reason</button>
+                                                    <button class="idea-menu-item idea-menu-danger" @click="closeIdeaMenu(); deleteSlot(idea.id)">× Delete</button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>
