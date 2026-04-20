@@ -1484,16 +1484,31 @@
                         No options yet. Click <strong>Ask AI for options</strong> to generate a few, or <strong>+ Blank option</strong> to start one by hand.
                     </div>
 
-                    <!-- Compare grid: two subgrids sharing row heights. The left
-                         column lives outside the horizontal scroll wrapper so
-                         it's naturally pinned (no `position: sticky` needed);
-                         `grid-template-rows: subgrid` keeps option headers lined
-                         up with their idea-cell row in the scrolling grid. -->
+                    <!-- Compare grid: four-cell layout sharing row heights via
+                         subgrid. The window-header row is HOISTED OUT of the
+                         horizontal scroll container so native CSS `position:
+                         sticky` (vertical pinning) works — its horizontal
+                         scroll is synced to the idea-cells grid via JS since
+                         that sync isn't frame-sensitive. -->
                     <div v-else-if="gridMode === 'grid'" class="year-grid-wrap"
                          :style="`--window-count: ${currentYearPlan.windows.length}; --row-count: ${visibleGridRowCount};`">
-                        <!-- LEFT: fixed-width column, no scroll -->
-                        <div class="year-grid-left">
-                            <div class="grid-cell grid-corner">Options ↓ / Windows →</div>
+                        <!-- Row 1, Col 1: corner. -->
+                        <div class="grid-cell grid-corner">Options ↓ / Windows →</div>
+
+                        <!-- Row 1, Col 2: window headers. Sticky top (CSS) +
+                             horizontal scroll synced to .year-grid-scroll. -->
+                        <div class="year-grid-window-row">
+                            <div class="year-grid-window-row-inner" ref="yearGridWindowInnerEl">
+                                <div v-for="(win, widx) in currentYearPlan.windows" :key="'wh-'+widx" class="grid-cell grid-window-header">
+                                    <strong>{{ win.label || `Window #${widx + 1}` }}</strong>
+                                    <div class="win-dates">{{ win.start_date }} → {{ win.end_date }}</div>
+                                    <div v-if="win.duration_hint" class="win-duration">~{{ win.duration_hint }}d</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rows 2..end, Col 1: option-header column. -->
+                        <div class="year-grid-left-options">
                             <template v-for="opt in currentYearPlan.options" :key="'lh-'+opt.id">
                                 <template v-if="shouldShowOption(opt)">
                                 <div class="grid-cell grid-option-header" :class="{ 'grid-row-excluded': opt.status === 'excluded' }">
@@ -1542,16 +1557,9 @@
                             </template>
                         </div>
 
-                        <!-- RIGHT: horizontally-scrolling matrix (windows × options) -->
-                        <div class="year-grid-scroll">
+                        <!-- Rows 2..end, Col 2: idea cell matrix (scrolls horizontally) -->
+                        <div class="year-grid-scroll" ref="yearGridScrollEl" @scroll="syncWindowRowScroll">
                             <div class="year-grid-right">
-                                <!-- Window header row -->
-                                <div v-for="(win, widx) in currentYearPlan.windows" :key="'wh-'+widx" class="grid-cell grid-window-header" v-sticky-top>
-                                    <strong>{{ win.label || `Window #${widx + 1}` }}</strong>
-                                    <div class="win-dates">{{ win.start_date }} → {{ win.end_date }}</div>
-                                    <div v-if="win.duration_hint" class="win-duration">~{{ win.duration_hint }}d</div>
-                                </div>
-
                                 <!-- Idea cell per (visible option × window) -->
                                 <template v-for="opt in currentYearPlan.options" :key="'rrow-'+opt.id">
                                     <template v-if="shouldShowOption(opt)">

@@ -1847,6 +1847,21 @@ async function deleteOption(opt) {
             return visible.length + 1;
         });
 
+        // Horizontal scroll sync for the Compare grid. The window-header row
+        // lives OUTSIDE .year-grid-scroll so CSS `position: sticky` can pin
+        // it vertically; the trade-off is that its horizontal scroll position
+        // needs to be kept in step with the idea-cell grid's. A scroll event
+        // handler applies `translate3d` to the inner content — GPU-accelerated
+        // so the sync stays tight even with fast scrolling.
+        const yearGridScrollEl = ref(null);
+        const yearGridWindowInnerEl = ref(null);
+        function syncWindowRowScroll() {
+            const left = yearGridScrollEl.value?.scrollLeft || 0;
+            if (yearGridWindowInnerEl.value) {
+                yearGridWindowInnerEl.value.style.transform = `translate3d(${-left}px, 0, 0)`;
+            }
+        }
+
         // --- Display name fallback: label > window label > "Window #N" > "(unnamed)" ---
         function ideaDisplayName(idea) {
             if (idea.label) return idea.label;
@@ -2170,6 +2185,7 @@ async function deleteOption(opt) {
             focusedOptionIds, isOptionFocused, hasFocusedOptions,
             toggleOptionFocus, clearOptionFocus, shouldShowOption, ideaDisplayName,
             gridMode, stackOptionId, stackOption, stackableOptions, visibleGridRowCount,
+            yearGridScrollEl, yearGridWindowInnerEl, syncWindowRowScroll,
             ideasInCell, activeIdeasInCell, excludedIdeasInCell,
             startAddIdeaInCell, cancelAddSlot, saveNewSlot,
             startEditSlot, saveSlotEdit, cancelSlotEdit, deleteSlot,

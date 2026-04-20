@@ -911,18 +911,17 @@ header {
     .header-nav { gap: 2px; }
     .nav-tab { padding: 6px 10px; font-size: 0.85rem; }
 
-    /* Compact Compare-grid on phones: narrower first column and window
-       cells, tighter padding, smaller fonts. Still horizontal-scrolls, but
-       the option row header no longer eats 60% of the viewport. */
+    /* Compact Compare-grid on phones. */
     .year-grid-wrap {
         grid-template-columns: 100px 1fr;
         gap: 4px;
     }
-    .year-grid-right {
+    .year-grid-right,
+    .year-grid-window-row-inner {
         grid-template-columns: repeat(var(--window-count, 1), minmax(200px, 260px));
         gap: 4px;
     }
-    .year-grid-left { gap: 4px; }
+    .year-grid-left-options { gap: 4px; }
     .year-grid-wrap .grid-cell { padding: 6px 8px; font-size: 0.82rem; }
     .grid-window-header strong { font-size: 0.88rem; }
     .idea-card { padding: 6px 8px; }
@@ -1298,11 +1297,14 @@ header {
     gap: 8px;
 }
 
-/* Subgrid layout: left column lives outside the scroll wrapper, so the
-   first column is naturally pinned while the user scrolls the window
-   matrix horizontally. Row heights are shared across both sides via
-   `grid-template-rows: subgrid`. Works in Chrome 117+, Firefox 71+,
-   Safari 16+. */
+/* Four-quadrant subgrid layout:
+     Row 1 / Col 1: corner cell (sticky top)
+     Row 1 / Col 2: window-header row (sticky top, horizontal scroll synced)
+     Row 2+ / Col 1: option-header column (subgrid rows from wrap)
+     Row 2+ / Col 2: idea-cell matrix inside horizontal scroll (subgrid rows)
+   Hoisting the window-header row OUT of `.year-grid-scroll`'s BFC means
+   CSS `position: sticky; top: 0` pins it to `.year-detail` correctly.
+   Requires Chrome 117+, Firefox 71+, Safari 16+ (subgrid). */
 .year-grid-wrap {
     display: grid;
     grid-template-columns: 130px 1fr;
@@ -1311,11 +1313,25 @@ header {
     margin-top: 10px;
     min-width: 0;
 }
-.year-grid-left {
+.year-grid-window-row {
+    grid-column: 2;
+    grid-row: 1;
+    overflow: hidden;
+    min-width: 0;
+}
+.year-grid-window-row-inner {
+    display: grid;
+    grid-template-columns: repeat(var(--window-count, 1), minmax(240px, 300px));
+    gap: 6px;
+    min-width: max-content;
+    will-change: transform;
+    justify-content: start;
+}
+.year-grid-left-options {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: subgrid;
-    grid-row: 1 / -1;
+    grid-row: 2 / -1;
     grid-column: 1;
     gap: 6px;
     min-width: 0;
@@ -1324,7 +1340,7 @@ header {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: subgrid;
-    grid-row: 1 / -1;
+    grid-row: 2 / -1;
     grid-column: 2;
     gap: 0;
     overflow-x: auto;
@@ -1332,7 +1348,7 @@ header {
 }
 .year-grid-right {
     display: grid;
-    /* Cap the max so idea cells stop ballooning on wide viewports. */
+    /* Same template as the window-row-inner so columns line up. */
     grid-template-columns: repeat(var(--window-count, 1), minmax(240px, 300px));
     grid-template-rows: subgrid;
     grid-column: 1 / -1;
@@ -1376,14 +1392,13 @@ header {
     flex-direction: column;
     gap: 2px;
     justify-content: center;
-    /* Stick-on-scroll handled by the `v-sticky-top` directive in app.js —
-       CSS `position: sticky` is captured by `.year-grid-scroll`'s Block
-       Formatting Context (any element with `overflow-x: auto` becomes a
-       BFC root, which hijacks sticky descendants) so a JS sync is the
-       reliable path here. z-index stays set so the translated header
-       paints above the idea cells it slides over. */
+}
+/* The row wrapper owns the sticky — its parent is .year-grid-wrap which
+   has no overflow, so sticky correctly attaches to `.year-detail`. */
+.year-grid-window-row {
+    position: sticky;
+    top: 0;
     z-index: 3;
-    will-change: transform;
 }
 .grid-window-header strong { font-size: 0.95rem; }
 .grid-window-header .win-dates { font-size: 0.78rem; color: #6b7280; }
