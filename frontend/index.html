@@ -1459,16 +1459,16 @@
                             <button class="btn btn-small" @click="createOption">+ Blank option</button>
                         </div>
                     </div>
-                    <p class="year-section-hint">
-                        Rows are your open windows; columns are candidate year arrangements. Each cell is one trip idea — or empty if the option skips that window.
-                    </p>
-
                     <!-- Grid vs Stack view toggle. Stack mode (one option at a
                          time, windows listed vertically) is much more usable on
                          a phone; grid is the desktop comparison view. -->
                     <div class="year-view-mode" v-if="(currentYearPlan.options || []).length">
-                        <button class="mode-tab" :class="{ active: gridMode === 'grid' }" @click="gridMode = 'grid'">Compare grid</button>
-                        <button class="mode-tab" :class="{ active: gridMode === 'stack' }" @click="gridMode = 'stack'">Focus one option</button>
+                        <button class="mode-tab" :class="{ active: gridMode === 'grid' }" @click="gridMode = 'grid'">
+                            <span class="mode-tab-icon">▦</span> Compare
+                        </button>
+                        <button class="mode-tab" :class="{ active: gridMode === 'stack' }" @click="gridMode = 'stack'">
+                            <span class="mode-tab-icon">☰</span> Focus
+                        </button>
                     </div>
 
                     <div v-if="(currentYearPlan.windows || []).length === 0" class="empty-state-inline">
@@ -1481,7 +1481,7 @@
                     <div v-else-if="gridMode === 'grid'" class="year-grid-scroll">
                         <div class="year-grid" :style="`--window-count: ${currentYearPlan.windows.length}`">
                             <!-- Top-left corner -->
-                            <div class="grid-cell grid-corner">Options ↓ &nbsp;/&nbsp; Windows →</div>
+                            <div class="grid-cell grid-corner">options × windows</div>
 
                             <!-- Window column headers -->
                             <div v-for="(win, widx) in currentYearPlan.windows" :key="'wh-'+widx" class="grid-cell grid-window-header">
