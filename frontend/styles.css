@@ -1381,9 +1381,6 @@ header {
     justify-content: center;
     text-align: center;
     line-height: 1.2;
-    position: sticky;
-    top: 0;
-    z-index: 4;
 }
 .grid-option-header { background: #f9fafb; font-size: 0.8rem; }
 .grid-option-header .opt-name { font-size: 0.9rem; }
