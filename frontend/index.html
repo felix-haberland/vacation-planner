@@ -11,12 +11,14 @@
 <body>
     <div id="app">
         <header>
-            <h1 @click="goHome" style="cursor:pointer">Trip Planner</h1>
-            <span v-if="currentTrip" class="header-trip-name">{{ currentTrip.name }}</span>
-            <nav class="header-nav">
-                <button class="btn btn-small" @click="openYear" title="Plan the year: slots, trip options">📅 Year</button>
-                <button class="btn btn-small" @click="openLibrary" title="Golf courses & resorts library">⛳ Golf Library</button>
-            </nav>
+            <div class="header-top">
+                <h1 class="brand">Trip Planner</h1>
+                <nav class="header-nav">
+                    <button class="nav-tab" :class="{ active: currentSection === 'trips' }" @click="goHome">Trips</button>
+                    <button class="nav-tab" :class="{ active: currentSection === 'year' }" @click="openYear">Year</button>
+                    <button class="nav-tab" :class="{ active: currentSection === 'golf' }" @click="openLibrary">Golf Library</button>
+                </nav>
+            </div>
         </header>
 
         <!-- TRIP LIST VIEW -->

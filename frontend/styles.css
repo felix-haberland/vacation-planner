@@ -10,14 +10,42 @@ body {
 header {
     background: #2c3e50;
     color: white;
-    padding: 10px 24px;
+    padding: 0;
+}
+.header-top {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 24px;
+    padding: 10px 24px;
 }
-header h1 { font-size: 1.2rem; font-weight: 600; }
-.header-trip-name { font-size: 0.9rem; opacity: 0.7; }
-
+.brand {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.01em;
+}
+.header-nav {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+}
+.nav-tab {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.65);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+}
+.nav-tab:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.nav-tab.active {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-weight: 500;
+}
 .container { max-width: 900px; margin: 24px auto; padding: 0 16px; }
 
 /* --- Buttons --- */
@@ -755,8 +783,6 @@ header h1 { font-size: 1.2rem; font-weight: 600; }
 /* ==========================================================================
    Spec 006 — Golf library (Add flow shell; full browse lands in US2)
    ========================================================================== */
-
-.header-nav { margin-left: auto; display: flex; gap: 8px; }
 
 .library-intro { color: #666; font-size: 0.9rem; margin: 8px 0 16px; }
 .library-summary p { font-size: 0.9rem; color: #444; }

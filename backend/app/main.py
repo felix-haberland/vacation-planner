@@ -10,6 +10,7 @@ import base64
 import logging
 import os
 import secrets
+import sys
 import traceback
 from pathlib import Path
 
@@ -23,14 +24,23 @@ from .trips.routes import router as trips_router
 from .golf.routes import router as golf_router
 from .yearly.routes import router as yearly_router
 
-# Unhandled-exception log: append-only, human-readable. Ask "check latest error"
-# to have Claude tail this file.
+# Unhandled-exception log: goes to stderr (so Railway / `uvicorn` console captures
+# it) AND to an append-only `errors.log` for local dev. Ask "check latest error"
+# to tail the file locally; on Railway, scroll the deploy logs.
 _ERROR_LOG_PATH = Path(__file__).resolve().parent.parent / "errors.log"
 _error_logger = logging.getLogger("vacationplanner.errors")
 if not _error_logger.handlers:
-    _handler = logging.FileHandler(_ERROR_LOG_PATH)
-    _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
-    _error_logger.addHandler(_handler)
+    _formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+    _stream_handler = logging.StreamHandler(sys.stderr)
+    _stream_handler.setFormatter(_formatter)
+    _error_logger.addHandler(_stream_handler)
+    try:
+        _file_handler = logging.FileHandler(_ERROR_LOG_PATH)
+        _file_handler.setFormatter(_formatter)
+        _error_logger.addHandler(_file_handler)
+    except OSError:
+        # Read-only FS (some container setups) — stderr-only is fine.
+        pass
     _error_logger.setLevel(logging.ERROR)
     _error_logger.propagate = False
 

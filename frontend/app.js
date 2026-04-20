@@ -171,6 +171,15 @@ createApp({
             loadTrips();
         }
 
+        // Map the current view to a top-level section, used for the active
+        // tab highlight in the header nav.
+        const currentSection = computed(() => {
+            const v = view.value;
+            if (v === 'year' || v === 'year-detail') return 'year';
+            if (v && v.startsWith('library')) return 'golf';
+            return 'trips';
+        });
+
         // --- Create trip ---
         async function createTrip() {
             creating.value = true;
@@ -1913,6 +1922,7 @@ async function deleteOption(opt) {
             activityTagVocab, activityWeightsTotal, addActivityRow,
             lastMessageHasQuestions, zoomLastAssistant,
             goHome, createTrip, openTrip, sendMessage, doSend,
+            currentSection,
             quickAction, promptChangeFocus,
             activeConversations, archivedConversations, showArchivedConvs,
             editingDescription, editDescValue, descEditEl,
