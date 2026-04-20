@@ -14,15 +14,29 @@ import sys
 import traceback
 from pathlib import Path
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
-from fastapi.staticfiles import StaticFiles
+# Configure the root logger BEFORE any other imports that may call
+# `logging.getLogger(...)`. Without this, uvicorn adds its own handlers first
+# and third-party libs (SQLAlchemy, httpx, anthropic) end up with no handler,
+# so their warnings / info messages vanish — which on Railway looks like "no
+# logs at all". basicConfig is a no-op if handlers are already set, so if
+# something upstream (pytest, ipython) did the setup we won't fight it.
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stderr,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+# Make absolutely sure early module-load prints hit Railway's log stream.
+print("BOOT: app.main importing", file=sys.stderr, flush=True)
 
-from .database import init_golf_db, init_trips_db
-from .trips.routes import router as trips_router
-from .golf.routes import router as golf_router
-from .yearly.routes import router as yearly_router
+from fastapi import FastAPI, Request  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.responses import FileResponse, JSONResponse, Response  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+
+from .database import init_golf_db, init_trips_db  # noqa: E402
+from .trips.routes import router as trips_router  # noqa: E402
+from .golf.routes import router as golf_router  # noqa: E402
+from .yearly.routes import router as yearly_router  # noqa: E402
 
 # Unhandled-exception log: goes to stderr (so Railway / `uvicorn` console captures
 # it) AND to an append-only `errors.log` for local dev. Ask "check latest error"
@@ -103,6 +117,11 @@ def _check_basic_auth(header: str) -> bool:
 
 @app.middleware("http")
 async def require_basic_auth(request: Request, call_next):
+    # /healthz is a public liveness probe — Railway / curl need it to work
+    # without credentials to distinguish "app is down" from "app is up but
+    # returning 401".
+    if request.url.path == "/healthz":
+        return await call_next(request)
     if not _AUTH_USERS:
         return await call_next(request)
     header = request.headers.get("Authorization", "")
@@ -118,12 +137,16 @@ async def require_basic_auth(request: Request, call_next):
 
 @app.exception_handler(Exception)
 async def _log_unhandled_exception(request: Request, exc: Exception):
-    _error_logger.error(
-        "%s %s\n%s",
-        request.method,
-        request.url.path,
-        "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+    tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    # Belt-and-suspenders: write directly to stderr in addition to the logger,
+    # so even if logging config is wrong (Railway, custom uvicorn setup) the
+    # traceback still lands in the deploy logs.
+    print(
+        f"UNHANDLED {request.method} {request.url.path}\n{tb}",
+        file=sys.stderr,
+        flush=True,
     )
+    _error_logger.error("%s %s\n%s", request.method, request.url.path, tb)
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error", "error_type": type(exc).__name__},
@@ -141,8 +164,29 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup():
-    init_trips_db()
-    init_golf_db()
+    print("BOOT: startup() begin", file=sys.stderr, flush=True)
+    try:
+        init_trips_db()
+        print("BOOT: init_trips_db ok", file=sys.stderr, flush=True)
+        init_golf_db()
+        print("BOOT: init_golf_db ok", file=sys.stderr, flush=True)
+    except Exception:
+        # Without this, a startup exception is logged at DEBUG level by
+        # uvicorn and the process just dies. Print the traceback directly so
+        # Railway shows *why* the app never came up.
+        print("BOOT: startup FAILED", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
+        raise
+    print("BOOT: startup() done", file=sys.stderr, flush=True)
+
+
+# Lightweight liveness probe. Bypasses auth so curl/browser can hit it without
+# credentials to confirm the app is actually serving requests (vs. Railway's
+# edge returning 5xx because the container is unhealthy).
+@app.get("/healthz")
+def healthz():
+    return {"ok": True}
 
 
 app.include_router(trips_router)
