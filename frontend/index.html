@@ -14,8 +14,8 @@
             <div class="header-top">
                 <h1 class="brand" @click="goHome" style="cursor: pointer">Trip Planner</h1>
                 <nav class="header-nav">
-                    <button class="nav-tab" :class="{ active: currentSection === 'trips' }" @click="goTrips">Trips</button>
                     <button class="nav-tab" :class="{ active: currentSection === 'year' }" @click="openYear">Year</button>
+                    <button class="nav-tab" :class="{ active: currentSection === 'trips' }" @click="goTrips">Trips</button>
                     <button class="nav-tab" :class="{ active: currentSection === 'golf' }" @click="openLibrary">Golf Library</button>
                 </nav>
             </div>
@@ -24,13 +24,13 @@
         <!-- HOME VIEW -->
         <div v-if="view === 'home'" class="container home-view">
             <div class="home-tiles">
+                <button class="home-tile" @click="openYear">
+                    <div class="home-tile-title">Yearly Planning</div>
+                    <div class="home-tile-desc">Arrange the year — compare whole-year options across your vacation windows.</div>
+                </button>
                 <button class="home-tile" @click="goTrips">
                     <div class="home-tile-title">Trips</div>
                     <div class="home-tile-desc">Plan individual trips with the chatbot — shortlist destinations, explore options, decide.</div>
-                </button>
-                <button class="home-tile" @click="openYear">
-                    <div class="home-tile-title">Year Planner</div>
-                    <div class="home-tile-desc">Arrange the year — compare whole-year options across your vacation windows.</div>
                 </button>
                 <button class="home-tile" @click="openLibrary">
                     <div class="home-tile-title">Golf Library</div>
