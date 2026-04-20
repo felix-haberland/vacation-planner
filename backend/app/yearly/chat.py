@@ -15,6 +15,7 @@ import anthropic
 from sqlalchemy.orm import Session
 
 from . import crud, models, tools
+from ..anthropic_utils import create_message
 from ..trips import crud as trips_crud, vacationmap
 from ..trips.models import Conversation
 
@@ -292,7 +293,8 @@ def handle_year_plan_chat_message(
     max_iterations = 10
 
     for _ in range(max_iterations):
-        response = client.messages.create(
+        response = create_message(
+            client,
             model="claude-sonnet-4-20250514",
             max_tokens=4096,
             system=system_prompt,

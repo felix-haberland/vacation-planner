@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from . import crud, models, schemas, vacationmap
 from .tools import TOOL_DEFINITIONS, TOOL_HANDLERS, execute_tool
+from ..anthropic_utils import create_message
 from ..golf.tools import GOLF_TOOL_DEFINITIONS, GOLF_TOOL_HANDLERS
 
 # Merge golf tools into the shared registry at import time (side effect is
@@ -268,7 +269,8 @@ def handle_chat_message(
     max_iterations = 10  # safety limit
 
     for _ in range(max_iterations):
-        response = client.messages.create(
+        response = create_message(
+            client,
             model="claude-sonnet-4-20250514",
             max_tokens=4096,
             system=system_prompt,
