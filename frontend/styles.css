@@ -914,12 +914,16 @@ header {
     /* Compact Compare-grid on phones: narrower first column and window
        cells, tighter padding, smaller fonts. Still horizontal-scrolls, but
        the option row header no longer eats 60% of the viewport. */
-    .year-grid {
-        grid-template-columns: 100px repeat(var(--window-count, 1), minmax(200px, 1fr));
+    .year-grid-wrap {
+        grid-template-columns: 100px 1fr;
         gap: 4px;
     }
-    .year-grid .grid-cell { padding: 6px 8px; font-size: 0.82rem; }
-    .grid-option-header .opt-name { font-size: 0.92rem; }
+    .year-grid-right {
+        grid-template-columns: repeat(var(--window-count, 1), minmax(200px, 1fr));
+        gap: 4px;
+    }
+    .year-grid-left { gap: 4px; }
+    .year-grid-wrap .grid-cell { padding: 6px 8px; font-size: 0.82rem; }
     .grid-window-header strong { font-size: 0.88rem; }
     .idea-card { padding: 6px 8px; }
 }
@@ -1294,35 +1298,53 @@ header {
     gap: 8px;
 }
 
-.year-grid-scroll {
-    overflow-x: auto;
-    margin-top: 10px;
-    /* Establish a positioning context so the sticky first column uses THIS
-       as its scrolling ancestor (not the outer `.year-detail`). Without
-       `position: relative` some browsers pick the wrong ancestor and the
-       column un-sticks partway through the scroll. */
-    position: relative;
-}
-.year-grid {
+/* Subgrid layout: left column lives outside the scroll wrapper, so the
+   first column is naturally pinned while the user scrolls the window
+   matrix horizontally. Row heights are shared across both sides via
+   `grid-template-rows: subgrid`. Works in Chrome 117+, Firefox 71+,
+   Safari 16+. */
+.year-grid-wrap {
     display: grid;
-    /* First col = option row header (tight); one col per window. */
-    grid-template-columns: 130px repeat(var(--window-count, 1), minmax(260px, 1fr));
+    grid-template-columns: 130px 1fr;
+    grid-template-rows: repeat(var(--row-count, 1), auto);
     gap: 6px;
-    min-width: 100%;
-    position: relative;
+    margin-top: 10px;
+    min-width: 0;
 }
-.year-grid .grid-cell {
-    background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
-    padding: 8px 10px; font-size: 0.84rem;
+.year-grid-left {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: subgrid;
+    grid-row: 1 / -1;
+    grid-column: 1;
+    gap: 6px;
+    min-width: 0;
 }
-/* Pin the option-header column while the user scrolls through windows. */
-.year-grid .grid-corner,
-.year-grid .grid-option-header {
-    position: sticky;
-    left: 0;
-    z-index: 2;
-    align-self: stretch;
-    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.04);
+.year-grid-scroll {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: subgrid;
+    grid-row: 1 / -1;
+    grid-column: 2;
+    gap: 0;
+    overflow-x: auto;
+    min-width: 0;
+}
+.year-grid-right {
+    display: grid;
+    grid-template-columns: repeat(var(--window-count, 1), minmax(260px, 1fr));
+    grid-template-rows: subgrid;
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    gap: 6px;
+    min-width: max-content;
+}
+.year-grid-wrap .grid-cell {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.84rem;
 }
 .grid-corner {
     background: #f3f4f6;

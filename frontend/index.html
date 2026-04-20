@@ -1484,22 +1484,18 @@
                         No options yet. Click <strong>Ask AI for options</strong> to generate a few, or <strong>+ Blank option</strong> to start one by hand.
                     </div>
 
-                    <div v-else-if="gridMode === 'grid'" class="year-grid-scroll">
-                        <div class="year-grid" :style="`--window-count: ${currentYearPlan.windows.length}`">
-                            <!-- Top-left corner -->
+                    <!-- Compare grid: two subgrids sharing row heights. The left
+                         column lives outside the horizontal scroll wrapper so
+                         it's naturally pinned (no `position: sticky` needed);
+                         `grid-template-rows: subgrid` keeps option headers lined
+                         up with their idea-cell row in the scrolling grid. -->
+                    <div v-else-if="gridMode === 'grid'" class="year-grid-wrap"
+                         :style="`--window-count: ${currentYearPlan.windows.length}; --row-count: ${visibleGridRowCount};`">
+                        <!-- LEFT: fixed-width column, no scroll -->
+                        <div class="year-grid-left">
                             <div class="grid-cell grid-corner">Options ↓ / Windows →</div>
-
-                            <!-- Window column headers -->
-                            <div v-for="(win, widx) in currentYearPlan.windows" :key="'wh-'+widx" class="grid-cell grid-window-header">
-                                <strong>{{ win.label || `Window #${widx + 1}` }}</strong>
-                                <div class="win-dates">{{ win.start_date }} → {{ win.end_date }}</div>
-                                <div v-if="win.duration_hint" class="win-duration">~{{ win.duration_hint }}d</div>
-                            </div>
-
-                            <!-- Option rows -->
-                            <template v-for="opt in currentYearPlan.options" :key="'r-'+opt.id">
+                            <template v-for="opt in currentYearPlan.options" :key="'lh-'+opt.id">
                                 <template v-if="shouldShowOption(opt)">
-                                <!-- Option row header -->
                                 <div class="grid-cell grid-option-header" :class="{ 'grid-row-excluded': opt.status === 'excluded' }">
                                     <div v-if="isEditingOptionField(opt, 'name')" class="inline-edit">
                                         <input v-model="optionFieldDraft" class="inline-edit-input"
@@ -1542,9 +1538,24 @@
                                         <button v-if="opt.status === 'excluded'" class="btn btn-small btn-danger" @click="deleteOption(opt)" title="Delete">×</button>
                                     </div>
                                 </div>
+                                </template>
+                            </template>
+                        </div>
 
-                                <!-- One cell per window in this option -->
-                                <div v-for="(win, widx) in currentYearPlan.windows" :key="'c-'+opt.id+'-'+widx" class="grid-cell grid-idea-cell" :class="{ 'grid-row-excluded': opt.status === 'excluded' }">
+                        <!-- RIGHT: horizontally-scrolling matrix (windows × options) -->
+                        <div class="year-grid-scroll">
+                            <div class="year-grid-right">
+                                <!-- Window header row -->
+                                <div v-for="(win, widx) in currentYearPlan.windows" :key="'wh-'+widx" class="grid-cell grid-window-header">
+                                    <strong>{{ win.label || `Window #${widx + 1}` }}</strong>
+                                    <div class="win-dates">{{ win.start_date }} → {{ win.end_date }}</div>
+                                    <div v-if="win.duration_hint" class="win-duration">~{{ win.duration_hint }}d</div>
+                                </div>
+
+                                <!-- Idea cell per (visible option × window) -->
+                                <template v-for="opt in currentYearPlan.options" :key="'rrow-'+opt.id">
+                                    <template v-if="shouldShowOption(opt)">
+                                    <div v-for="(win, widx) in currentYearPlan.windows" :key="'c-'+opt.id+'-'+widx" class="grid-cell grid-idea-cell" :class="{ 'grid-row-excluded': opt.status === 'excluded' }">
                                     <!-- Stack of ACTIVE ideas (excluded are hidden behind a toggle) -->
                                     <template v-for="idea in activeIdeasInCell(opt, widx)" :key="idea.id">
                                         <div v-if="editingSlotId === idea.id" class="slot-form-inline">
@@ -1667,6 +1678,7 @@
                                 </div>
                                 </template>
                             </template>
+                            </div>
                         </div>
                     </div>
 

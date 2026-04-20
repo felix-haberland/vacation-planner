@@ -1778,6 +1778,15 @@ async function deleteOption(opt) {
             return opt.status !== 'excluded' || showExcludedOptions.value;
         }
 
+        // Row count for the Compare grid (1 header row + 1 per visible option).
+        // Needed so `grid-template-rows` on the outer grid has explicit rows
+        // that the left/right subgrids can inherit.
+        const visibleGridRowCount = computed(() => {
+            if (!currentYearPlan.value) return 1;
+            const visible = (currentYearPlan.value.options || []).filter(shouldShowOption);
+            return visible.length + 1;
+        });
+
         // --- Display name fallback: label > window label > "Window #N" > "(unnamed)" ---
         function ideaDisplayName(idea) {
             if (idea.label) return idea.label;
@@ -2100,7 +2109,7 @@ async function deleteOption(opt) {
             slotsReferencingWindow, confirmRemoveWindowRow,
             focusedOptionIds, isOptionFocused, hasFocusedOptions,
             toggleOptionFocus, clearOptionFocus, shouldShowOption, ideaDisplayName,
-            gridMode, stackOptionId, stackOption, stackableOptions,
+            gridMode, stackOptionId, stackOption, stackableOptions, visibleGridRowCount,
             ideasInCell, activeIdeasInCell, excludedIdeasInCell,
             startAddIdeaInCell, cancelAddSlot, saveNewSlot,
             startEditSlot, saveSlotEdit, cancelSlotEdit, deleteSlot,
